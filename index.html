@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Faktura VAT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js" defer></script>
+</head>
+
+<body>
+  <div class="app">
+    <h1>Faktura noLimit</h1>
+
+    <fieldset>
+      <legend>Ustawienia faktury</legend>
+      <div class="row">
+        <div class="col-4">
+          <label>Numer faktury
+            <input type="text" id="invoiceNumber">
+          </label>
+        </div>
+        <div class="col-4">
+          <label>Data wystawienia
+            <input type="date" id="issueDate">
+          </label>
+        </div>
+        <div class="col-4">
+          <label>Data sprzedaży / wykonania usługi
+            <input type="date" id="saleDate">
+          </label>
+        </div>
+        <div class="col-4">
+          <label>Logo
+            <input type="file" id="logoFile" accept="image/*">
+          </label>
+          <div class="muted" style="font-size:12px;margin-top:4px;">Obsługiwane: PNG/JPG/SVG.</div>
+        </div>
+        <div class="col-4">
+          <label>Forma płatności
+            <select id="paymentMethod">
+              <option value="Przelew" selected>Przelew</option>
+              <option value="Gotówka">Gotówka</option>
+            </select>
+          </label>
+        </div>
+        <div class="col-4">
+          <label>Termin płatności
+            <input type="date" id="dueDate">
+          </label>
+        </div>
+        <div class="col-4">
+          <label>Uregulowane?
+            <select id="paid">
+              <option value="Nie" selected>Nie</option>
+              <option value="Tak">Tak</option>
+            </select>
+          </label>
+        </div>
+        <div class="col-4">
+          <label>Nazwa Banku
+            <input type="text" id="bankName">
+          </label>
+        </div>
+        <div class="col-4">
+          <label>Nr rachunku bankowego
+            <input type="text" id="iban">
+          </label>
+        </div>
+        <div class="col-4">
+          <label>Rodzaj VAT
+            <select id="vatType">
+              <option value="">Standardowy VAT</option>
+              <option value="art113">Zwolnienie z VAT — art. 113 ust. 1 i 9</option>
+              <option value="art43">Zwolnienie z VAT — art. 43 ust. 1</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Dane sprzedawcy</legend>
+      <div class="row">
+        <div class="col-6">
+          <label>Nazwa firmy
+            <input type="text" id="sellerName">
+          </label>
+        </div>
+        <div class="col-6">
+          <label>NIP
+            <input type="text" id="sellerNIP">
+          </label>
+        </div>
+        <div class="col-6">
+          <label>Adres
+            <input type="text" id="sellerAddress">
+          </label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Dane nabywcy</legend>
+      <div class="row">
+        <div class="col-6">
+          <label>Rodzaj klienta
+            <select id="clientType">
+              <option value="individual">Osoba fizyczna</option>
+              <option value="company">Firma</option>
+            </select>
+          </label>
+        </div>
+        <div class="col-6">
+          <label id="clientNipLabel" style="display:none;">NIP
+            <input type="text" id="clientNIP">
+          </label>
+        </div>
+        <div class="col-6">
+          <label>Nazwa / Imię i nazwisko
+            <input type="text" id="clientName">
+          </label>
+        </div>
+        <div class="col-6">
+          <label>Adres
+            <input type="text" id="clientAddress">
+          </label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Pozycje</legend>
+      <div class="table-wrap">
+        <table class="editor" id="invoiceItems">
+          <thead>
+            <tr>
+              <th style="width:52px;">Lp.</th>
+              <th>Nazwa</th>
+              <th style="width:110px;">Jm</th>
+              <th style="width:110px;">Ilość</th>
+              <th style="width:150px;">Cena netto</th>
+              <th style="width:110px;">% VAT</th>
+              <th class="right" style="width:150px;">Kwota netto</th>
+              <th class="right" style="width:150px;">Kwota VAT</th>
+              <th class="right" style="width:150px;">Kwota brutto</th>
+              <th style="width:64px;"></th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+      </div>
+      <div class="btns">
+        <button id="addRowBtn" type="button">Dodaj pozycję</button>
+        <button class="secondary" id="clearRowsBtn" type="button">Wyczyść pozycje</button>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <div class="col-6"></div>
+        <div class="col-6">
+          <div class="row">
+            <div class="col-6">
+              <div class="muted">Suma netto</div>
+            </div>
+            <div class="col-6 right"><strong id="sumNet">0,00 zł</strong></div>
+            <div class="col-6">
+              <div class="muted">Suma VAT</div>
+            </div>
+            <div class="col-6 right"><strong id="sumVAT">0,00 zł</strong></div>
+            <div class="col-6">
+              <div class="muted">Suma brutto</div>
+            </div>
+            <div class="col-6 right"><strong id="sumGross">0,00 zł</strong></div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Uwagi</legend>
+      <textarea id="notes" rows="3"></textarea>
+    </fieldset>
+
+    <div class="btns1">
+      <button type="button" id="activateLicense">Dożywotni dostęp</button>
+      <button id="generatePDF" type="button" style="display:none;">Generuj PDF</button>
+      <button id="refreshPreview" type="button" class="secondary">Odśwież podgląd</button>
+    </div>
+
+    <div id="printArea" class="print-surface">
+      <div id="invoicePrint" class="invoice avoid-break">
+        <div class="inv-header">
+          <div class="logo">
+            <img id="logoImg" alt="" style="display:none;">
+
+          </div>
+          <div class="meta">
+            <div><strong>Faktura nr:</strong> <span id="pNumber">—</span></div>
+            <div><strong>Data wystawienia:</strong> <span id="pIssueDate">—</span></div>
+            <div><strong>Data sprzedaży:</strong> <span id="pSaleDate">—</span></div>
+          </div>
+        </div>
+
+        <div class="party avoid-break">
+          <div class="card">
+            <h3>Sprzedawca</h3>
+            <div id="pSellerName">—</div>
+            <div id="pSellerAddress" class="muted">—</div>
+            <div><span class="muted">NIP:</span> <span id="pSellerNIP">—</span></div>
+          </div>
+          <div class="card">
+            <h3>Nabywca</h3>
+            <div id="pClientName">—</div>
+            <div id="pClientAddress" class="muted">—</div>
+            <div id="pClientNipRow" style="display:none;"><span class="muted">NIP:</span> <span id="pClientNIP">—</span>
+            </div>
+          </div>
+        </div>
+
+        <table class="print" id="printTable">
+          <thead>
+            <tr>
+              <th class="w-8">Lp.</th>
+              <th>Produkt / usługa</th>
+              <th class="w-20">Jm</th>
+              <th class="w-20 ta-right">Ilość</th>
+              <th class="w-26 ta-right col-price">Cena jedn.</th>
+              <th class="w-26 ta-right col-value">Wartość Netto</th>
+              <th class="w-24 ta-right col-net">Wartość Netto</th>
+              <th class="w-24 ta-right col-vat">VAT %</th>
+              <th class="w-24 ta-right col-vat-amt">Kwota VAT</th>
+              <th class="w-24 ta-right col-gross">Wartość Brutto</th>
+            </tr>
+          </thead>
+          <tbody id="printItemsBody"></tbody>
+        </table>
+
+        <div class="summary">
+          <div class="sum-box">
+            <div class="sum-row"><span>Forma płatności</span><span id="pPaymentMethod">—</span></div>
+            <div class="sum-row"><span>Termin płatności</span><span id="pDueDate">—</span></div>
+            <div class="sum-row"><span>Do zapłaty</span><span id="pToPay">—</span></div>
+            <div class="sum-row"><span>Uregulowane</span><span id="pPaid">—</span></div>
+            <div class="sum-row"><span>Bank</span><span id="pBank">—</span></div>
+            <div class="sum-row"><span>Nr rachunku</span><span id="pIBAN" class="nowrap">—</span></div>
+          </div>
+          <div class="sum-box">
+            <div class="sum-row"><span>Suma netto</span><span id="pSumNet">—</span></div>
+            <div class="sum-row"><span>Suma VAT</span><span id="pSumVAT">—</span></div>
+            <div class="sum-row total"><span>Suma brutto</span><span id="pSumGross">—</span></div>
+          </div>
+        </div>
+
+        <div class="note" id="pVatNote" style="display:none;">
+          Zwolniony z VAT na podstawie art. 113 ust. 1 lub ust. 9 ustawy o VAT.
+        </div>
+
+        <div class="foot">
+          <div class="box">
+            <strong class="strongs">Kwota słownie:</strong>
+            <div id="pInWords" style="margin-top:2px;">—</div>
+          </div>
+          <div class="box">
+            <strong class="strongs">Uwagi:</strong>
+            <div id="pNotes" style="margin-top:2px;">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts.js" defer></script>
+</body>
+
+</html>
